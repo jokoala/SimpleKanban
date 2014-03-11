@@ -45,6 +45,11 @@ R,Done
 <!-- The HTML starts here -->
 <a id="data_link" class="button" href="#" style="float:right;">Data</a>
 <a id="board_link" class="button" href="#" style="float:right;">Board</a>
+<a id="download" class="button" href="#" style="float:right;">Download</a>
+<div class="fileUpload button">
+    <span>Upload</span>
+    <input type="file" id="file" class="upload"></input>
+</div>
 <h1>Kanban Board</h1>
 <div id="output"></div>
 <div class="clear"></div>
@@ -87,10 +92,27 @@ R,Done
 	 .headline { font-weight: bold; height: 3em; color: #000000;}
 	 .queue_column .headline { font-weight: bold; height: 3em; color: #d0d0d0;}
 	 .footer { font-size: 80%; color: #808080; padding-top: 5em;}
+         .fileUpload {
+                position: relative;
+                overflow: hidden;
+                float: right;
+         }
+         .fileUpload input.upload {
+                position: absolute;
+                top: 0;
+                right: 0;
+                margin: 0;
+                padding: 0;
+                font-size: 20px;
+                cursor: pointer;
+                opacity: 0;
+                filter: alpha(opacity=0);
+         }
 	 -->
 </style>
 <script src="jquery-1.11.0.js"></script>
 <script src="jquery-ui-1.10.4/ui/jquery-ui.js"></script>
+<script src="FileSaver.js"></script>
 
 <script language="JavaScript">
 $("#board_link").hide();
@@ -198,6 +220,43 @@ $("#data_link").click(function () {
   $("#data_link").hide();
   $("#data_output").show();
   $("#board_link").show();
+});
+
+$("#download").click(function () {
+  var data = "";
+  $("#board .dp10").each(function() {
+    var state = $(this).data("state");
+	$(this).find("li").each( function() {
+	   var story = $(this).data("story");
+	   data += state + "," + story[1] + "," + story[2] + "\n";
+	});
+  });
+
+  var blob = new Blob([data], {type: "text/plain;charset=utf-8"});
+  saveAs(blob, "hello.txt");
+});
+
+$("#file").change(function (evt) {
+        console.log("BLUB!");
+        console.log(evt);
+        var myFile = evt.originalEvent.target.files[0];
+        console.log(myFile.lastModifiedDate.toLocaleDateString());
+
+        var myReader = FileReader();
+        myReader.onload = (function(e) {
+              console.log(e.target.result);
+              var state_data = init_states($("#states").text().split("\n"));
+              var app_data = { board: init_board(e.target.result.split("\n")), states: state_data.states, states_order: state_data.states_order}
+              $("#output").empty();
+              $("#output").append(create_board(app_data));
+
+              $("#output").show();
+              $("#data_link").show();
+              $("#data_output").hide();
+              $("#board_link").hide();
+        });
+
+        myReader.readAsText(myFile);
 });
 
 var state_data = init_states($("#states").text().split("\n"));
